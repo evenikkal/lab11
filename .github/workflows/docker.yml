@@ -1,0 +1,96 @@
+# Task A3: CI/CD — run tests for all three services, then build and push
+# Docker images to GitHub Container Registry (GHCR) on every push to main.
+
+name: CI / Docker Build & Push
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  # ── Go tests ──────────────────────────────────────────────────────────
+  test-go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: go_service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache: true
+      - run: go test ./... -v
+
+  # ── Python tests ──────────────────────────────────────────────────────
+  test-python:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: python_service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: pytest -v
+
+  # ── Rust tests ────────────────────────────────────────────────────────
+  test-rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: rust_service
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust_service
+      - run: cargo test --verbose
+
+  # ── Build & push images (only on push to main, after all tests pass) ──
+  build-and-push:
+    needs: [ test-go, test-python, test-rust ]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push go_service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./go_service
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/go-service:latest
+
+      - name: Build and push python_service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./python_service
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/python-service:latest
+
+      - name: Build and push rust_service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./rust_service
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/rust-service:latest
