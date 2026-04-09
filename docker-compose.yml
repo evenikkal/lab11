@@ -1,0 +1,24 @@
+# Task M5: compose file that starts Python (FastAPI), Go (Gin), and Rust (Axum) services.
+
+services:
+  go_service:
+    build: ./go_service
+    ports:
+      - "8082:8082"
+    restart: unless-stopped
+
+  python_service:
+    build: ./python_service
+    ports:
+      - "8090:8090"
+    environment:
+      GO_SERVICE_URL: http://go_service:8082
+    depends_on:
+      - go_service
+    restart: unless-stopped
+
+  rust_service:
+    build: ./rust_service
+    ports:
+      - "8091:8091"
+    restart: unless-stopped
