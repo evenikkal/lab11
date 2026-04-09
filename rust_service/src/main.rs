@@ -100,6 +100,7 @@ mod tests {
             .body(Body::from("not json"))
             .unwrap();
         let resp = app.oneshot(req).await.unwrap();
-        assert_eq!(resp.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        // axum returns 400 for unparseable JSON, 422 for schema mismatch
+        assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     }
 }
