@@ -7,7 +7,7 @@ RUN apk add --no-cache musl-dev
 WORKDIR /app
 
 # Cache dependencies in a separate layer (rebuild only when Cargo.toml changes).
-COPY Cargo.toml ./
+COPY Cargo.toml Cargo.lock ./
 RUN mkdir src && echo "fn main() {}" > src/main.rs \
     && cargo build --release \
     && rm src/main.rs target/release/rust_service

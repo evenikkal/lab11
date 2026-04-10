@@ -53,7 +53,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: rust_service
-      - run: cargo test --verbose
+      - run: cargo test --verbose --locked
 
   # ── Build & push images (only on push to main, after all tests pass) ──
   build-and-push:
