@@ -19,6 +19,9 @@ build/
 # Rust
 target/
 
+# Assignment brief
+do this.txt
+
 # IDE
 .vscode/
 .idea/
