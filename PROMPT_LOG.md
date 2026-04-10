@@ -56,11 +56,18 @@
 
 **Результат:** Исправила ожидаемый статус на 400 — axum возвращает 400 Bad Request для непарсируемого JSON и 422 для ошибок схемы. Все 3 теста зелёные.
 
+### Промпт 4
+
+**Промпт:**
+«Закоммить Cargo.lock в репозиторий и добавь COPY Cargo.lock в Rust Dockerfile, чтобы сборка была воспроизводимой.»
+
+**Результат:** Cargo.lock добавлен в git. В Dockerfile строка `COPY Cargo.toml ./` заменена на `COPY Cargo.toml Cargo.lock ./`, что гарантирует одинаковые версии зависимостей при каждой сборке.
+
 ### Итого
 
-- Количество промптов: 3
-- Что пришлось исправлять вручную: ничего (Claude сам нашёл и исправил ошибку)
-- Время: ~15 мин
+- Количество промптов: 4
+- Что пришлось исправлять вручную: ничего
+- Время: ~18 мин
 
 ---
 
@@ -120,11 +127,18 @@
 
 **Результат:** Workflow с 4 jobs: test-go, test-python, test-rust (параллельно) и build-and-push (needs: все три, только на push в main). Образы тегируются как ghcr.io/{owner}/{service}:latest.
 
+### Промпт 2
+
+**Промпт:**
+«Добавь в CI флаг --locked для cargo test, чтобы CI падал при рассинхроне Cargo.lock. Также добавь .dockerignore в каждый сервис, чтобы тесты и кэши не попадали в Docker-контекст.»
+
+**Результат:** Добавлен `--locked` в test-rust job. Созданы .dockerignore для go_service (исключает *_test.go), python_service (исключает __pycache__/, test_*.py) и rust_service (исключает target/).
+
 ### Итого
 
-- Количество промптов: 1
+- Количество промптов: 2
 - Что пришлось исправлять вручную: ничего
-- Время: ~5 мин
+- Время: ~7 мин
 
 ---
 
@@ -133,11 +147,11 @@
 | Задание | Инструмент | Промптов | Время |
 | --- | --- | --- | --- |
 | М1 — Dockerfile Python (FastAPI) | Claude Code | 2 | ~10 мин |
-| М3 — Dockerfile Rust (Axum, musl/scratch) | Claude Code | 3 | ~15 мин |
+| М3 — Dockerfile Rust (Axum, musl/scratch) | Claude Code | 4 | ~18 мин |
 | М5 — docker-compose.yml | Claude Code | 1 | ~5 мин |
 | В1 — Go static compilation (scratch) | Claude Code | 2 | ~10 мин |
-| В3 — CI/CD GitHub Actions | Claude Code | 1 | ~5 мин |
-| **Итого** | | **9** | **~45 мин** |
+| В3 — CI/CD GitHub Actions | Claude Code | 2 | ~7 мин |
+| **Итого** | | **11** | **~50 мин** |
 
 **Выводы:**
 - Go с `CGO_ENABLED=0` даёт полностью статический бинарник, пригодный для scratch-образа (~8 МБ с -ldflags="-s -w" против ~300 МБ на Alpine).
